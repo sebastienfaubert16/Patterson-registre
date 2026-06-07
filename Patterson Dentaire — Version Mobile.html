@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patterson Dentaire</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{background:#f5f5f5;color:#1a1a1a;font-size:15px}
+.hdr{background:#fff;border-bottom:1px solid #e8e8e8;padding:12px 16px;display:flex;align-items:center;gap:10;position:sticky;top:0;z-index:10}
+.hdr-title{font-weight:600;font-size:15px;flex:1}
+.hdr-btn{background:none;border:none;cursor:pointer;color:#185FA5;font-size:13px;padding:5px 8px;border-radius:6px;display:flex;align-items:center;gap:4px}
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid #ebebeb}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.btn-primary{background:#E6F1FB;color:#185FA5;border:1px solid #185FA5;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;width:100%}
+input,select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-size:14px;background:#fff;color:#1a1a1a;margin-bottom:10px}
+.fab{position:fixed;bottom:20px;right:20px;width:48px;height:48px;border-radius:50%;background:#185FA5;color:#fff;border:none;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:100;box-shadow:0 4px 12px rgba(24,95,165,0.3)}
+.chat-bubble{border-radius:14px;padding:9px 13px;font-size:13px;line-height:1.6;max-width:88%;white-space:pre-wrap}
+.screen{display:none;padding:14px;padding-bottom:80px}
+.screen.active{display:block}
+#screen-login{display:flex;flex-direction:column;justify-content:center;min-height:100vh;padding:24px}
+.sup-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sup-card{background:#fff;border:1px solid #ebebeb;border-radius:10px;padding:11px;cursor:pointer}
+.doc-row{background:#fff;border:1px solid #ebebeb;border-radius:8px;padding:9px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-box{background:#f5f5f5;border-radius:8px;padding:10px 12px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen active">
+  <div style="text-align:center;margin-bottom:28px">
+    <div style="width:52px;height:52px;border-radius:14px;background:#E6F1FB;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
+      <span style="font-size:26px">🦷</span>
+    </div>
+    <div style="font-weight:600;font-size:17px">Patterson Dentaire</div>
+    <div style="font-size:12px;color:#888;margin-top:3px">Registre de documentation technique</div>
+  </div>
+  <div class="card">
+    <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">Adresse courriel</label>
+    <input id="inp-email" type="email" placeholder="prenom.nom@pattersondentaire.ca">
+    <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">Mot de passe</label>
+    <input id="inp-pwd" type="password" placeholder="••••••••" style="margin-bottom:0">
+    <div id="login-err" style="color:#A32D2D;font-size:12px;margin:8px 0;display:none"></div>
+    <button class="btn-primary" style="margin-top:12px" onclick="doLogin()">Se connecter</button>
+  </div>
+  <div style="text-align:center;font-size:11px;color:#aaa;margin-top:14px">Accès réservé aux employés Patterson</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="screen-dash" class="screen">
+  <div class="hdr">
+    <span>🦷</span>
+    <span class="hdr-title" style="margin-left:8px">Patterson Dentaire</span>
+    <button class="hdr-btn" onclick="doLogout()">⬆ Quitter</button>
+  </div>
+  <div style="padding:14px;padding-bottom:80px">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px">
+      <div class="stat-box"><div style="font-size:10px;color:#888">Fournisseurs</div><div style="font-size:22px;font-weight:600" id="st-sup">0</div></div>
+      <div class="stat-box"><div style="font-size:10px;color:#888">Documents</div><div style="font-size:22px;font-weight:600" id="st-doc">0</div></div>
+    </div>
+    <div style="font-weight:600;font-size:14px;margin-bottom:10px">Fournisseurs</div>
+    <div class="sup-grid" id="sup-grid"></div>
+  </div>
+</div>
+
+<!-- SUPPLIER DETAIL -->
+<div id="screen-sup" class="screen">
+  <div class="hdr">
+    <button class="hdr-btn" onclick="showDash()" style="color:#888">← Retour</button>
+    <span class="hdr-title" id="sup-title"></span>
+    <button class="hdr-btn" onclick="showAddDoc()">+ Doc</button>
+  </div>
+  <div style="padding:14px;padding-bottom:80px">
+    <div class="card" id="sup-info" style="margin-bottom:12px"></div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button onclick="setTab('docs')" id="tab-docs" style="flex:1;padding:7px;border-radius:7px;border:1px solid #ddd;background:#f0f0f0;font-size:13px;cursor:pointer;font-weight:500">Documents</button>
+      <button onclick="setTab('stats')" id="tab-stats" style="flex:1;padding:7px;border-radius:7px;border:1px solid #ddd;background:#fff;font-size:13px;cursor:pointer">Stats</button>
+    </div>
+    <div id="tab-content-docs"></div>
+    <div id="tab-content-stats" style="display:none"></div>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div id="screen-search" class="screen">
+  <div class="hdr">
+    <button class="hdr-btn" onclick="showDash()" style="color:#888">← Retour</button>
+    <span class="hdr-title">Recherche</span>
+  </div>
+  <div style="padding:14px;padding-bottom:80px">
+    <input id="search-inp" type="text" placeholder="Titre, référence, fournisseur…" oninput="doSearch()" style="margin-bottom:8px">
+    <div id="search-count" style="font-size:11px;color:#888;margin-bottom:10px"></div>
+    <div id="search-results"></div>
+  </div>
+</div>
+
+<!-- AGENT PANEL -->
+<div id="agent-panel" style="display:none;position:fixed;bottom:76px;right:14px;width:310px;height:400px;background:#fff;border-radius:14px;border:1px solid #ddd;flex-direction:column;z-index:99;box-shadow:0 8px 24px rgba(0,0,0,0.13)">
+  <div style="padding:10px 14px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px;background:#f8f8f8;border-radius:14px 14px 0 0">
+    <div style="width:28px;height:28px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:15px">🤖</div>
+    <div style="font-weight:500;font-size:13px">Assistant technique <span style="color:#3B6D11;font-size:10px">● En ligne</span></div>
+  </div>
+  <div id="chat-msgs" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px"></div>
+  <div style="padding:8px 10px;border-top:1px solid #eee;display:flex;gap:6px">
+    <input id="chat-inp" type="text" placeholder="Ex: manuel Statim 2000…" style="margin:0;padding:7px 10px;font-size:13px" onkeydown="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()" style="padding:7px 12px;border-radius:8px;border:1px solid #185FA5;background:#E6F1FB;color:#185FA5;cursor:pointer;font-size:14px">➤</button>
+  </div>
+</div>
+
+<button class="fab" id="fab-btn" onclick="toggleAgent()">🤖</button>
+<!-- Nav bar -->
+<div id="nav-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;display:flex;z-index:98">
+  <button onclick="showDash()" style="flex:1;padding:12px 0;background:none;border:none;font-size:11px;color:#185FA5;cursor:pointer">🏠 Accueil</button>
+  <button onclick="showSearch()" style="flex:1;padding:12px 0;background:none;border:none;font-size:11px;color:#185FA5;cursor:pointer">🔍 Recherche</button>
+</div>
+
+<!-- ADD DOC MODAL -->
+<div id="modal-doc" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:20px;width:90%;max-width:340px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:14px">
+      <span style="font-weight:600;font-size:15px">Ajouter un document</span>
+      <button onclick="closeModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#888">✕</button>
+    </div>
+    <label style="font-size:12px;color:#888;display:block;margin-bottom:3px">Titre *</label>
+    <input id="nd-title" placeholder="Titre du document">
+    <label style="font-size:12px;color:#888;display:block;margin-bottom:3px">Type</label>
+    <select id="nd-type" style="margin-bottom:10px">
+      <option>Manuel</option><option>Catalogue</option><option>Schéma</option><option>Bulletin</option><option>Installation</option>
+    </select>
+    <label style="font-size:12px;color:#888;display:block;margin-bottom:3px">Référence</label>
+    <input id="nd-ref" placeholder="ex: MOD-001">
+    <label style="font-size:12px;color:#888;display:block;margin-bottom:3px">Statut</label>
+    <select id="nd-status" style="margin-bottom:14px">
+      <option>Vérifié</option><option>En révision</option><option>Obsolète</option>
+    </select>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeModal()" style="flex:1;padding:9px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px">Annuler</button>
+      <button onclick="saveDoc()" style="flex:1;padding:9px;border-radius:8px;border:1px solid #185FA5;background:#E6F1FB;color:#185FA5;cursor:pointer;font-size:13px;font-weight:500">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var SUPS=[
+  {id:1,name:"A-dec",logo:"AD",color:"#185FA5",bg:"#E6F1FB",cat:"Fauteuils",docs:[
+    {id:101,t:"300/400/500 Delivery Systems",type:"Manuel",ref:"DEL-300-500",s:"Vérifié"},
+    {id:102,t:"311/411/511 Parts List",type:"Catalogue",ref:"311-511",s:"Vérifié"},
+    {id:103,t:"A-dec 300 Service Guide",type:"Manuel",ref:"A300-SVC",s:"Vérifié"},
+    {id:104,t:"A-dec 500 Service Guide",type:"Manuel",ref:"A500-SVC",s:"Vérifié"},
+    {id:105,t:"Service Parts Catalog 2022",type:"Catalogue",ref:"SPC-2022",s:"Vérifié"},
+    {id:106,t:"Lights Breakdown",type:"Schéma",ref:"LIGHTS-BD",s:"Vérifié"}
+  ]},
+  {id:2,name:"Acteon",logo:"AC",color:"#0F6E56",bg:"#E1F5EE",cat:"Détartrage",docs:[
+    {id:201,t:"ACTEON 2019 Catalog NA",type:"Catalogue",ref:"ACT-2019",s:"En révision"},
+    {id:202,t:"Satelec 2015 Parts List",type:"Catalogue",ref:"SAT-2015",s:"En révision"}
+  ]},
+  {id:3,name:"Air Techniques",logo:"AT",color:"#854F0B",bg:"#FAEEDA",cat:"Compresseurs",docs:[
+    {id:301,t:"2023 Parts Book Canada",type:"Catalogue",ref:"AT-2023-CA",s:"Vérifié"},
+    {id:302,t:"AirStar 30 Desiccant Dryer",type:"Manuel",ref:"AS30-DES",s:"Vérifié"},
+    {id:303,t:"AirStar 1/7 Operation Manual",type:"Manuel",ref:"AS17-OM",s:"Vérifié"},
+    {id:304,t:"AT2000 Plus Parts Breakdown",type:"Catalogue",ref:"AT2000-BD",s:"Vérifié"},
+    {id:305,t:"VacStar 20/80",type:"Manuel",ref:"VS2080",s:"Vérifié"},
+    {id:306,t:"AirStar Yearly Maintenance Kit",type:"Bulletin",ref:"AS-MAINT",s:"Vérifié"}
+  ]},
+  {id:4,name:"Belmont",logo:"BL",color:"#993C1D",bg:"#FAECE7",cat:"Fauteuils",docs:[
+    {id:401,t:"Bel-Cypher N Parts",type:"Catalogue",ref:"BCN-PL",s:"Vérifié"},
+    {id:402,t:"ECO-Sys Parts Rev 2.3",type:"Catalogue",ref:"791-ECO",s:"Vérifié"},
+    {id:403,t:"Canada Electronic Service Book",type:"Manuel",ref:"BEL-ESB",s:"Vérifié"},
+    {id:404,t:"Takara Progia Dental Unit",type:"Manuel",ref:"TAK-PROGIA",s:"Vérifié"},
+    {id:405,t:"Takara Quolis 5000 Parts",type:"Catalogue",ref:"TAK-Q5000",s:"Vérifié"}
+  ]},
+  {id:5,name:"Cefla/Anthos",logo:"CF",color:"#533AB7",bg:"#EEEDFE",cat:"Fauteuils",docs:[
+    {id:501,t:"Anthos Units Installation",type:"Installation",ref:"ANTH-INST",s:"Vérifié"},
+    {id:502,t:"R7 2019 CNA",type:"Manuel",ref:"R7-2019",s:"Vérifié"},
+    {id:503,t:"RXDC Technical Manual",type:"Manuel",ref:"RXDC-TM",s:"Vérifié"}
+  ]},
+  {id:6,name:"DCI",logo:"DC",color:"#185FA5",bg:"#E6F1FB",cat:"Fauteuils",docs:[
+    {id:601,t:"DCI Catalogue général",type:"Catalogue",ref:"DCI-CAT",s:"Vérifié"},
+    {id:602,t:"DCI Dental Lights Breakdown",type:"Schéma",ref:"DCI-LIGHTS",s:"Vérifié"},
+    {id:603,t:"DCI Parts Catalog 2022",type:"Catalogue",ref:"DCI-2022",s:"Vérifié"}
+  ]},
+  {id:7,name:"DentalEZ",logo:"DE",color:"#0F6E56",bg:"#E1F5EE",cat:"Compresseurs",docs:[
+    {id:701,t:"DentalEZ 2020 Catalog",type:"Catalogue",ref:"DEZ-2020",s:"En révision"},
+    {id:702,t:"Dual Wet Vacuum Pump MC201/202",type:"Manuel",ref:"MC201-202",s:"Vérifié"},
+    {id:703,t:"RAMVAC Owl Panel",type:"Manuel",ref:"RAM-OWL",s:"Vérifié"}
+  ]},
+  {id:8,name:"Dentsply",logo:"DS",color:"#993C1D",bg:"#FAECE7",cat:"Détartrage",docs:[
+    {id:801,t:"Cavitron Parts 1 & 2",type:"Catalogue",ref:"CAV-PL",s:"Vérifié"},
+    {id:802,t:"Cavitron Touch Parts",type:"Catalogue",ref:"CAV-TCH",s:"Vérifié"},
+    {id:803,t:"G119 Cavitron SPS Manual",type:"Manuel",ref:"G119",s:"Vérifié"},
+    {id:804,t:"G120 Cavitron Jet SPS",type:"Manuel",ref:"G120",s:"Vérifié"},
+    {id:805,t:"G121 Cavitron Select",type:"Manuel",ref:"G121",s:"Vérifié"},
+    {id:806,t:"G131 Cavitron Plus",type:"Manuel",ref:"G131",s:"Vérifié"},
+    {id:807,t:"G132 Cavitron Jet Plus",type:"Manuel",ref:"G132",s:"Vérifié"}
+  ]},
+  {id:9,name:"EMS",logo:"EM",color:"#854F0B",bg:"#FAEEDA",cat:"Détartrage",docs:[
+    {id:901,t:"Airflow Prophylaxis Master",type:"Manuel",ref:"AFM-INST",s:"Vérifié"},
+    {id:902,t:"EMS Spare Parts Catalogue",type:"Catalogue",ref:"EMS-SPC",s:"Vérifié"},
+    {id:903,t:"EMS S2 Parts & Mini",type:"Catalogue",ref:"EMS-S2",s:"Vérifié"},
+    {id:904,t:"Perio & Handy 3 Plus",type:"Manuel",ref:"PER-H3P",s:"Vérifié"}
+  ]},
+  {id:10,name:"Instrumentarium",logo:"IN",color:"#185FA5",bg:"#E6F1FB",cat:"Imagerie",docs:[
+    {id:1001,t:"OP-200 Panorama Troubleshooting",type:"Manuel",ref:"OP200-TS",s:"En révision"},
+    {id:1002,t:"OP300 CEPH Spare Parts",type:"Catalogue",ref:"OP300-CEPH",s:"Vérifié"},
+    {id:1003,t:"OP300 Maxio Spare Parts",type:"Catalogue",ref:"OP300-MAX",s:"En révision"}
+  ]},
+  {id:11,name:"KaVo",logo:"KV",color:"#993C1D",bg:"#FAECE7",cat:"Pièces à main",docs:[
+    {id:1101,t:"COMFORTdrive 200XDR",type:"Manuel",ref:"CD200XDR",s:"Vérifié"},
+    {id:1102,t:"KAVO 1078-1080 Parts",type:"Catalogue",ref:"KV-1080",s:"Vérifié"},
+    {id:1103,t:"ELECTROtorque Plus 4892",type:"Manuel",ref:"ET4892-OG",s:"Vérifié"},
+    {id:1104,t:"ELECTROtorque 4892 Parts",type:"Catalogue",ref:"ET4892-BD",s:"Vérifié"},
+    {id:1105,t:"COMFORTtronic 4894 Parts",type:"Catalogue",ref:"CT4894-BD",s:"Vérifié"},
+    {id:1106,t:"ELECTROtorque TLC 4893",type:"Catalogue",ref:"ET4893-BD",s:"Vérifié"},
+    {id:1107,t:"KaVo OP3D Service Manual",type:"Manuel",ref:"OP3D-SM",s:"Vérifié"},
+    {id:1108,t:"QuattroCare Plus Manual",type:"Manuel",ref:"QC-PLUS",s:"Vérifié"},
+    {id:1109,t:"Intracompact 2068 CHC Parts",type:"Catalogue",ref:"2068CHC",s:"Vérifié"},
+    {id:1110,t:"S11L SURGMATIC Repair",type:"Manuel",ref:"S11L-RM",s:"Vérifié"}
+  ]},
+  {id:12,name:"Midmark",logo:"MK",color:"#854F0B",bg:"#FAEEDA",cat:"Stérilisation",docs:[
+    {id:1201,t:"M11 Maintenance & Troubleshooting",type:"Manuel",ref:"M11-MAINT",s:"Vérifié"},
+    {id:1202,t:"Compresseur CL & P Series",type:"Manuel",ref:"CLP-COMP",s:"Vérifié"},
+    {id:1203,t:"CV3 & CV6 Service & Parts",type:"Manuel",ref:"CV3-CV6",s:"Vérifié"},
+    {id:1204,t:"Power Vac G Service & Parts",type:"Manuel",ref:"PVACG-SM",s:"Vérifié"}
+  ]},
+  {id:13,name:"NSK",logo:"NK",color:"#533AB7",bg:"#EEEDFE",cat:"Pièces à main",docs:[
+    {id:1301,t:"Care3 Plus Operation Manual",type:"Manuel",ref:"C3P-OM",s:"Vérifié"},
+    {id:1302,t:"NLX Nako/Plus Motor Service",type:"Manuel",ref:"NLX-SM",s:"Vérifié"},
+    {id:1303,t:"NSK Spare Parts & Components",type:"Catalogue",ref:"NSK-SPC",s:"Vérifié"},
+    {id:1304,t:"NSK Varios 370 & 750",type:"Manuel",ref:"VAR-M",s:"Vérifié"},
+    {id:1305,t:"Ultima XL Operation Manual",type:"Manuel",ref:"ULTXL-OM",s:"Vérifié"}
+  ]},
+  {id:14,name:"Pelton & Crane",logo:"PC",color:"#185FA5",bg:"#E6F1FB",cat:"Fauteuils & Stérilisation",docs:[
+    {id:1401,t:"Spirit 3000 Chairs Parts",type:"Catalogue",ref:"SP3000-PL",s:"En révision"},
+    {id:1402,t:"Chairman Service Manual",type:"Manuel",ref:"CHAIR-SM",s:"Vérifié"},
+    {id:1403,t:"Light Fantastic II Parts & Service",type:"Manuel",ref:"LFII-SM",s:"Vérifié"},
+    {id:1404,t:"Delta Q Sterilizer Parts",type:"Catalogue",ref:"DELTAQ-PL",s:"Vérifié"},
+    {id:1405,t:"Omniclave Service Manual",type:"Manuel",ref:"OMNI-SM",s:"Vérifié"},
+    {id:1406,t:"Validator Plus Service Manual",type:"Manuel",ref:"VALP-SM",s:"Vérifié"},
+    {id:1407,t:"Magnaclave Parts List",type:"Catalogue",ref:"MAGCL-PL",s:"Vérifié"}
+  ]},
+  {id:15,name:"Planmeca",logo:"PM",color:"#0F6E56",bg:"#E1F5EE",cat:"Imagerie & Unités",docs:[
+    {id:1501,t:"Compact I Spare Parts v5",type:"Catalogue",ref:"COMP1-SPM",s:"Vérifié"},
+    {id:1502,t:"Planmeca Intra",type:"Manuel",ref:"INTRA-M",s:"Vérifié"},
+    {id:1503,t:"Proline XC Technical Manual v11",type:"Manuel",ref:"PXCTM-V11",s:"Vérifié"},
+    {id:1504,t:"ProMax Parts Manual",type:"Catalogue",ref:"PMAX-PL",s:"Vérifié"},
+    {id:1505,t:"Proline CC Parts v13",type:"Catalogue",ref:"PLCC-PL",s:"Vérifié"}
+  ]},
+  {id:16,name:"Scican",logo:"SC",color:"#993C1D",bg:"#FAECE7",cat:"Stérilisation",docs:[
+    {id:1601,t:"Bravo Service Manual",type:"Manuel",ref:"BRAV-SM",s:"Vérifié"},
+    {id:1602,t:"Hydrim C51w Service",type:"Manuel",ref:"C51W-SM",s:"Vérifié"},
+    {id:1603,t:"Hydrim L110w Service",type:"Manuel",ref:"L110W-SM",s:"Vérifié"},
+    {id:1604,t:"SCI-CAN Parts Catalogue",type:"Catalogue",ref:"SCI-PL",s:"Vérifié"},
+    {id:1605,t:"STATIM 2000/5000 Manuel",type:"Manuel",ref:"STAT25-M",s:"Vérifié"},
+    {id:1606,t:"Statim S Class Cycle Faults",type:"Bulletin",ref:"STAT-CF",s:"Vérifié"},
+    {id:1607,t:"StatClave Service Manual",type:"Manuel",ref:"STCL-SM",s:"Vérifié"},
+    {id:1608,t:"TSB Statim 2000 & 5000",type:"Bulletin",ref:"TSB-221",s:"Vérifié"}
+  ]},
+  {id:17,name:"Sirona",logo:"SR",color:"#533AB7",bg:"#EEEDFE",cat:"Unités & Pièces à main",docs:[
+    {id:1701,t:"C2 / C4 / C8 Parts",type:"Catalogue",ref:"SIR-CX",s:"Vérifié"},
+    {id:1702,t:"Moteur SL / EL-SL",type:"Manuel",ref:"SIR-SL",s:"Vérifié"},
+    {id:1703,t:"Intego Notice d'utilisation",type:"Manuel",ref:"INTEGO-NU",s:"Vérifié"},
+    {id:1704,t:"Sinius Notice d'utilisation",type:"Manuel",ref:"SINIUS-NU",s:"Vérifié"},
+    {id:1705,t:"Teneo Notice d'utilisation",type:"Manuel",ref:"TENEO-NU",s:"Vérifié"}
+  ]},
+  {id:18,name:"W&H",logo:"WH",color:"#185FA5",bg:"#E6F1FB",cat:"Stérilisation & Pièces à main",docs:[
+    {id:1801,t:"Lexa — Erreurs et Dépannage",type:"Bulletin",ref:"LEXA-TS",s:"Vérifié"},
+    {id:1802,t:"Lexa — Réparation et pièces",type:"Catalogue",ref:"LEXA-PL",s:"Vérifié"},
+    {id:1803,t:"Lisa — Manuel propriétaire",type:"Manuel",ref:"LISA-OM",s:"Vérifié"},
+    {id:1804,t:"Lisa — Instructions de test",type:"Bulletin",ref:"LISA-TEST",s:"Vérifié"}
+  ]},
+  {id:19,name:"Porter/Accutron",logo:"PR",color:"#0F6E56",bg:"#E1F5EE",cat:"Protoxyde d'azote",docs:[
+    {id:1901,t:"Porter Dental Catalogue 2023",type:"Catalogue",ref:"POR-2023",s:"Vérifié"},
+    {id:1902,t:"Accutron 2019 Catalog",type:"Catalogue",ref:"ACC-2019",s:"En révision"}
+  ]},
+  {id:20,name:"Tuttnauer",logo:"TT",color:"#993C1D",bg:"#FAECE7",cat:"Stérilisation",docs:[
+    {id:2001,t:"Field Service Guide",type:"Manuel",ref:"TUT-FSG",s:"Vérifié"}
+  ]},
+  {id:21,name:"RPI",logo:"RP",color:"#533AB7",bg:"#EEEDFE",cat:"Pièces génériques",docs:[
+    {id:2101,t:"RPI Dental Section",type:"Catalogue",ref:"RPI-DENT",s:"Vérifié"},
+    {id:2102,t:"RPI Catalog 2020",type:"Catalogue",ref:"RPI-2020",s:"Vérifié"}
+  ]},
+  {id:22,name:"Velopex",logo:"VP",color:"#854F0B",bg:"#FAEEDA",cat:"Imagerie",docs:[
+    {id:2201,t:"Extra-X MK6 Technical Manual",type:"Manuel",ref:"EXX-MK6",s:"En révision"},
+    {id:2202,t:"Intra-X MK6 Technical Manual",type:"Manuel",ref:"INX-MK6",s:"En révision"}
+  ]},
+  {id:23,name:"Morita",logo:"MR",color:"#185FA5",bg:"#E6F1FB",cat:"Pièces à main",docs:[
+    {id:2301,t:"LUBRINA 2 Parts List",type:"Catalogue",ref:"LUB2-PL",s:"Vérifié"},
+    {id:2302,t:"LUBRINA Parts List",type:"Catalogue",ref:"LUB-PL",s:"Vérifié"}
+  ]},
+  {id:24,name:"Star Dental",logo:"ST",color:"#0F6E56",bg:"#E1F5EE",cat:"Pièces à main",docs:[
+    {id:2401,t:"Blis-sonic Scalers",type:"Manuel",ref:"BLIS-SC",s:"En révision"},
+    {id:2402,t:"Titan Motor Manual",type:"Manuel",ref:"TIT-MOT",s:"En révision"}
+  ]}
+];
+
+var currentUser=null, currentSup=null, chatHistory=[], agentOpen=false;
+
+function sc(s){return{Vérifié:{bg:"#EAF3DE",c:"#3B6D11"},"En révision":{bg:"#FAEEDA",c:"#854F0B"},Obsolète:{bg:"#FCEBEB",c:"#A32D2D"}}[s]||{bg:"#f0f0f0",c:"#666"};}
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  var nb=document.getElementById('nav-bar');
+  nb.style.display=(id==='login')?'none':'flex';
+  var fab=document.getElementById('fab-btn');
+  fab.style.display=(id==='login')?'none':'flex';
+}
+
+function doLogin(){
+  var e=document.getElementById('inp-email').value.toLowerCase().trim();
+  var p=document.getElementById('inp-pwd').value;
+  var err=document.getElementById('login-err');
+  if(!e.endsWith('@pattersondentaire.ca')&&!e.endsWith('@pattersoncompanies.com')){
+    err.textContent='Courriel non autorisé.';err.style.display='block';return;
+  }
+  if(p!=='tech'){err.textContent='Mot de passe incorrect.';err.style.display='block';return;}
+  err.style.display='none';
+  var n=e.split('@')[0].split(/[._]/).map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ');
+  currentUser={email:e,name:n};
+  showDash();
+  initChat();
+}
+
+function doLogout(){currentUser=null;show('login');}
+
+function showDash(){
+  show('dash');
+  var allD=SUPS.reduce(function(a,s){return a+s.docs.length;},0);
+  document.getElementById('st-sup').textContent=SUPS.length;
+  document.getElementById('st-doc').textContent=allD;
+  var g=document.getElementById('sup-grid');
+  g.innerHTML=SUPS.map(function(s){
+    return '<div class="sup-card" onclick="showSup('+s.id+')" style="border-left:3px solid '+s.color+'">'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
+      '<div style="width:28px;height:28px;border-radius:6px;background:'+s.bg+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:'+s.color+'">'+s.logo+'</div>'+
+      '<div style="min-width:0"><div style="font-weight:500;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s.name+'</div>'+
+      '<div style="font-size:9px;color:#888">'+s.cat+'</div></div></div>'+
+      '<div style="font-size:10px;color:#888">📄 '+s.docs.length+' docs</div></div>';
+  }).join('');
+}
+
+function showSup(id){
+  currentSup=SUPS.find(function(s){return s.id===id;});
+  if(!currentSup)return;
+  document.getElementById('sup-title').textContent=currentSup.name;
+  document.getElementById('sup-info').innerHTML=
+    '<div style="display:flex;align-items:center;gap:10px">'+
+    '<div style="width:36px;height:36px;border-radius:8px;background:'+currentSup.bg+';display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:'+currentSup.color+'">'+currentSup.logo+'</div>'+
+    '<div><div style="font-weight:600;font-size:15px">'+currentSup.name+'</div><div style="font-size:11px;color:#888">'+currentSup.cat+' · '+currentSup.docs.length+' documents</div></div></div>';
+  setTab('docs');
+  show('sup');
+}
+
+function setTab(t){
+  document.getElementById('tab-docs').style.background=t==='docs'?'#f0f0f0':'#fff';
+  document.getElementById('tab-stats').style.background=t==='stats'?'#f0f0f0':'#fff';
+  document.getElementById('tab-content-docs').style.display=t==='docs'?'block':'none';
+  document.getElementById('tab-content-stats').style.display=t==='stats'?'block':'none';
+  if(t==='docs') renderDocs();
+  else renderStats();
+}
+
+function renderDocs(){
+  var el=document.getElementById('tab-content-docs');
+  if(!currentSup||currentSup.docs.length===0){el.innerHTML='<div style="text-align:center;padding:24px;color:#888">Aucun document</div>';return;}
+  el.innerHTML=currentSup.docs.map(function(d){
+    var ss=sc(d.s);
+    return '<div class="doc-row">'+
+      '<div style="flex:1;min-width:0">'+
+      '<div style="font-weight:500;font-size:13px">'+d.t+'</div>'+
+      '<div style="font-size:10px;color:#888;margin-top:2px">'+d.type+' · '+d.ref+'</div></div>'+
+      '<span class="badge" style="background:'+ss.bg+';color:'+ss.c+'">'+d.s+'</span>'+
+      '<button onclick="delDoc('+currentSup.id+','+d.id+')" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:16px;padding:2px 0 2px 6px">🗑</button>'+
+      '</div>';
+  }).join('');
+}
+
+function renderStats(){
+  var el=document.getElementById('tab-content-stats');
+  var types=["Manuel","Catalogue","Schéma","Bulletin","Installation"];
+  el.innerHTML='<div class="stat-grid">'+types.map(function(tp){
+    var c=currentSup.docs.filter(function(d){return d.type===tp;}).length;
+    return '<div class="stat-box"><div style="font-size:10px;color:#888">'+tp+'</div><div style="font-size:20px;font-weight:600">'+c+'</div></div>';
+  }).join('')+'</div>';
+}
+
+function showAddDoc(){document.getElementById('modal-doc').style.display='flex';}
+function closeModal(){document.getElementById('modal-doc').style.display='none';}
+function saveDoc(){
+  var t=document.getElementById('nd-title').value.trim();
+  if(!t||!currentSup)return;
+  var doc={id:Date.now(),t:t,type:document.getElementById('nd-type').value,ref:document.getElementById('nd-ref').value,s:document.getElementById('nd-status').value};
+  currentSup.docs.push(doc);
+  closeModal();
+  setTab('docs');
+}
+
+function delDoc(sid,did){
+  var s=SUPS.find(function(x){return x.id===sid;});
+  if(s)s.docs=s.docs.filter(function(d){return d.id!==did;});
+  if(currentSup&&currentSup.id===sid)currentSup=s;
+  renderDocs();
+}
+
+function showSearch(){show('search');document.getElementById('search-inp').value='';doSearch();}
+
+function doSearch(){
+  var q=document.getElementById('search-inp').value.toLowerCase().trim();
+  var allD=SUPS.flatMap(function(s){return s.docs.map(function(d){return Object.assign({},d,{sName:s.name,sColor:s.color,sId:s.id});});});
+  var res=q?allD.filter(function(d){return d.t.toLowerCase().includes(q)||(d.ref||'').toLowerCase().includes(q)||d.sName.toLowerCase().includes(q);}):allD;
+  document.getElementById('search-count').textContent=res.length+' résultat'+(res.length!==1?'s':'');
+  document.getElementById('search-results').innerHTML=res.map(function(d){
+    var ss=sc(d.s);
+    return '<div class="doc-row" onclick="showSup('+d.sId+')" style="cursor:pointer">'+
+      '<div style="flex:1;min-width:0">'+
+      '<div style="font-weight:500;font-size:13px">'+d.t+'</div>'+
+      '<div style="font-size:10px;margin-top:2px"><span style="color:'+d.sColor+';font-weight:500">'+d.sName+'</span> · '+d.type+' · '+d.ref+'</div></div>'+
+      '<span class="badge" style="background:'+ss.bg+';color:'+ss.c+'">'+d.s+'</span>'+
+      '</div>';
+  }).join('');
+}
+
+function toggleAgent(){
+  agentOpen=!agentOpen;
+  var p=document.getElementById('agent-panel');
+  p.style.display=agentOpen?'flex':'none';
+  document.getElementById('fab-btn').textContent=agentOpen?'✕':'🤖';
+}
+
+function initChat(){
+  var fn=currentUser?currentUser.name.split(' ')[0]:'';
+  var hr=new Date().getHours();
+  var gr=hr<12?'Bonjour':hr<18?'Bon après-midi':'Bonsoir';
+  var allD=SUPS.reduce(function(a,s){return a+s.docs.length;},0);
+  chatHistory=[{role:'assistant',content:gr+' '+fn+' ! Je suis votre assistant technique Patterson.\n\nJe connais vos '+allD+' documents sur '+SUPS.length+' fournisseurs. Comment puis-je vous aider ?'}];
+  renderChat();
+}
+
+function renderChat(){
+  var el=document.getElementById('chat-msgs');
+  el.innerHTML=chatHistory.map(function(m){
+    var isUser=m.role==='user';
+    return '<div style="display:flex;justify-content:'+(isUser?'flex-end':'flex-start')+'">'+
+      '<div class="chat-bubble" style="background:'+(isUser?'#E6F1FB':'#f5f5f5')+';color:'+(isUser?'#0C447C':'#1a1a1a')+'">'+m.content+'</div></div>';
+  }).join('');
+  el.scrollTop=el.scrollHeight;
+}
+
+async function sendChat(){
+  var inp=document.getElementById('chat-inp');
+  var txt=inp.value.trim(); if(!txt)return;
+  inp.value='';
+  chatHistory.push({role:'user',content:txt});
+  renderChat();
+  var cat=SUPS.map(function(s){return s.name+'('+s.cat+'): '+s.docs.map(function(d){return '"'+d.t+'"['+d.type+','+d.ref+']';}).join(', ');}).join('\n');
+  var sys='Tu es un assistant technique pour Patterson Dentaire Canada. Réponds en français canadien.\nBIBLIOTHÈQUE:\n'+cat+'\nTechnicien: '+(currentUser?currentUser.name:'');
+  try{
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:sys,messages:chatHistory})});
+    var data=await res.json();
+    var reply=(data.content||[]).find(function(b){return b.type==='text';});
+    chatHistory.push({role:'assistant',content:reply?reply.text:'Désolé, erreur.'});
+  }catch(e){chatHistory.push({role:'assistant',content:'Erreur de connexion.'});}
+  renderChat();
+}
+</script>
+</body>
+</html>
